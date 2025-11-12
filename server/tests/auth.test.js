@@ -65,7 +65,6 @@ describe('Authentication controller integration', () => {
   });
 
   /*
-  TODO: test login behaviour
   - attempt login request with user credentials
   - expect a 200 response
   - expect a JWT token in the response
@@ -73,8 +72,38 @@ describe('Authentication controller integration', () => {
   - store the issued token for use in subsequent tests
   */
   test('authenticates the same user and issues a fresh JWT', async () => {
-    // This test will always fail until the TODO above is implemented.
-    expect(true).toBe(false);
+    const response = await fetch(`${baseUrl}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: credentials.email,
+        password: credentials.password
+      })
+    });
+
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.token).toBeTruthy();
+    expect(payload.user.email).toBe(credentials.email.toLowerCase());
+    expect(payload.user).not.toHaveProperty('passwordHash');
+
+    // Replace issuedToken with the freshly issued token from login.
+    issuedToken = payload.token;
+  });
+
+  test('rejects authentication with invalid credentials', async () => {
+    const response = await fetch(`${baseUrl}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: credentials.email,
+        password: 'incorrect-password'
+      })
+    });
+
+    // Expect unauthorized for wrong password. Payload shape may vary; status is authoritative.
+    expect(response.status).toBe(401);
   });
 
   test('returns the public profile for the currently authenticated user', async () => {
